@@ -24,22 +24,23 @@ enum mode {
     manual
 };
 
-uint32_t buttonBounceDelay = 50; //ms
-uint32_t micBounceDelay = 500; //ms
-uint16_t micThresholdLevel = 512; // 0-1023 5v
+const uint32_t buttonBounceDelay = 50; //ms
+const uint32_t micBounceDelay = 500; //ms
+const uint32_t sampleWindow = 50; //ms
+const uint16_t micThresholdLevel = 512; // 0-1023 5v
 
 // Pins
-uint8_t modeButtonPin = A4;
-uint8_t modeButtonLED = A5;
+const uint8_t modeButtonPin = A4;
+const uint8_t modeButtonLED = 13;
 
-uint8_t cutButtonPin = 13;
+const uint8_t cutButtonPin = A5;
 
-uint8_t videoSourcePin[6] = {0,1,2,3,4,5};
-uint8_t videoSourceLED[6] = {6,7,8,9,11,12};
-uint8_t micPin[4] = {A0,A1,A2,A3};
+const uint8_t videoSourcePin[6] = {0,1,2,3,4,5};
+const uint8_t videoSourceLED[6] = {6,7,8,9,11,12};
+const uint8_t micPin[4] = {A0,A1,A2,A3};
 
 // Mapping
-uint16_t micToVideoSource[16] = {
+const uint16_t micToVideoSource[16] = {
     0, // 0000 No mics
     1, // 0001 Presenter Mic
     5, // 0010 Guest 1
@@ -57,7 +58,7 @@ uint16_t micToVideoSource[16] = {
     5, // 1110 G1 & G2 & G3
     5, // 1111 P & G2 & G3
 };
-uint16_t defaultVideoSource = 5;
+const uint16_t defaultVideoSource = 5;
 
 // Network Config
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0D, 0x6B, 0xB9};
@@ -133,7 +134,22 @@ void readButton(uint8_t button, uint8_t index) {
 }
 
 void readMic(uint8_t index) {
-    uint16_t reading = analogRead(micPin[index]);
+    uint32_t startTime = millis();
+    uint16_t reading;
+    uint16_t readingMin = 1024;
+    uint16_t readingMax = 0;
+
+    while(millis() - startTime < sampleWindow) {
+        // Sample min and max levels
+        reading = analogRead(micPin[index]);
+        if (reading > readingMax) {
+            readingMax = reading;
+        } else if (reading < readingMin) {
+            readingMin = reading;
+        }
+    }
+    reading = readingMax - readingMin;
+
     if (reading > micThresholdLevel) {
         debounceTrigger(LOW, index, &lastMicState, &micState, &micTrigger, debounceMic, micBounceDelay);
     } else {
