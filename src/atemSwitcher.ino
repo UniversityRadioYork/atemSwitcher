@@ -25,8 +25,11 @@ ATEMstd AtemSwitcher;
 #define DEBOUNCE_MS 20
 #define LONG_PRESS 1000
 
+#define SAMPLE_WINDOW_MS 50
 #define MIC_DEBOUNCE_MS 500
 #define MIC_THRESHOLD 512 // 0-1023 5v
+
+#define CUT_LIMIT 2000 // ms
 
 enum mode {
     automatic,
@@ -38,10 +41,9 @@ enum cutMode {
 };
 
 // Pins
-uint8_t modeButtonLED = A5;
-
-uint8_t videoSourceLED[6] = {6,7,8,9,11,12};
-uint8_t micPin[4] = {A0,A1,A2,A3};
+const uint8_t modeButtonLED = 13;
+const uint8_t videoSourceLED[6] = {6,7,8,9,11,12};
+const uint8_t micPin[4] = {A0,A1,A2,A3};
 
 Button vidSource1(0, PULLUP, INVERT, DEBOUNCE_MS);
 Button vidSource2(1, PULLUP, INVERT, DEBOUNCE_MS);
@@ -55,7 +57,7 @@ Button modeButton(7, PULLUP, INVERT, DEBOUNCE_MS);
 
 
 // Mapping
-uint16_t micToVideoSource[16] = {
+const uint16_t micToVideoSource[16] = {
     0, // 0000 No mics
     1, // 0001 Presenter Mic
     5, // 0010 Guest 1
@@ -73,7 +75,7 @@ uint16_t micToVideoSource[16] = {
     5, // 1110 G1 & G2 & G3
     5, // 1111 P & G2 & G3
 };
-uint16_t defaultVideoSource = 5;
+const uint16_t defaultVideoSource = 5;
 
 // Network Config
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0D, 0x6B, 0xB9};
@@ -100,6 +102,11 @@ uint32_t lastAutoChange;
 
 void setup() {
 
+    // Set up pins
+    for(uint8_t i = 0; i < 4; i++) {
+        pinMode(micPin[i], INPUT);
+    }
+
     // Start up Ethernet and Serial (debugging)
     Ethernet.begin(mac,clientIP);
     Serial.begin(115200);
@@ -124,11 +131,26 @@ void loop() {
 }
 
 void readMic(uint8_t index) {
-    uint16_t reading = analogRead(micPin[index]);
-    if (reading > micThresholdLevel) {
-        debounceTrigger(LOW, index, &lastMicState, &micState, &micTrigger, debounceMic, micBounceDelay);
+    uint32_t startTime = millis();
+    uint16_t reading;
+    uint16_t readingMin = 1024;
+    uint16_t readingMax = 0;
+
+    while(millis() - startTime < SAMPLE_WINDOW_MS) {
+        // Sample min and max levels
+        reading = analogRead(micPin[index]);
+        if (reading > readingMax) {
+            readingMax = reading;
+        } else if (reading < readingMin) {
+            readingMin = reading;
+        }
+    }
+    reading = readingMax - readingMin;
+
+    if (reading > MIC_THRESHOLD) {
+        debounceTrigger(LOW, index, &lastMicState, &micState, &micTrigger, debounceMic, MIC_DEBOUNCE_MS);
     } else {
-        debounceTrigger(HIGH, index, &lastMicState, &micState, &micTrigger, debounceMic, micBounceDelay);
+        debounceTrigger(HIGH, index, &lastMicState, &micState, &micTrigger, debounceMic, MIC_DEBOUNCE_MS);
     }
 }
 
@@ -220,7 +242,7 @@ void configureATEM() {
 
 void updateATEM() {
     if (modeState == automatic) {
-        if (millis() - lastAutoChange > 2000 && (videoSourceState != lastVideoSourceState)) {
+        if (millis() - lastAutoChange > CUT_LIMIT && (videoSourceState != lastVideoSourceState)) {
             Serial << (0x0F & ~micState) << endl;
             Serial << F("Auto change to ") << videoSourceState << endl;
             AtemSwitcher.changePreviewInput(videoSourceState);
