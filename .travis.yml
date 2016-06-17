@@ -34,7 +34,8 @@ install:
     #
     # http://platformio.org/lib/show/261/Ethernet2
     # http://platformio.org/lib/show/560/Streaming
-    - platformio lib install 261 560
+    # http://platformio.org/lib/show/77/Button
+    - platformio lib install 261 560 77
 
 script:
     - platformio run
