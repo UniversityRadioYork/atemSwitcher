@@ -264,33 +264,34 @@ void updateATEM() {
 }
 
 void updateFromATEM() {
+    // LOW is ON for LEDs as they are pull down
 
     // Update Green (Preview) LEDs
     for(int i = 0; i < 6; i++) {
-        bitWrite(greenLeds, i, AtemSwitcher.getPreviewTally(i+1) ? HIGH : LOW);
+        bitWrite(greenLeds, i, AtemSwitcher.getPreviewTally(i+1) ? LOW : HIGH);
     }
 
     // Update Red (Program) LEDs
     for(int i = 0; i < 6; i++) {
-        bitWrite(redLeds, i, AtemSwitcher.getProgramTally(i+1) ? HIGH : LOW);
+        bitWrite(redLeds, i, AtemSwitcher.getProgramTally(i+1) ? LOW : HIGH);
     }
 
     // Update cut LED
     if (cutState == cut) {
-        bitWrite(greenLeds, 6, HIGH);
-        bitWrite(redLeds, 6, LOW);
-    } else {
         bitWrite(greenLeds, 6, LOW);
         bitWrite(redLeds, 6, HIGH);
+    } else {
+        bitWrite(greenLeds, 6, HIGH);
+        bitWrite(redLeds, 6, LOW);
     }
 
     // Update mode LED
     if (modeState == automatic) {
-        bitWrite(greenLeds, 7, HIGH);
-        bitWrite(redLeds, 7, LOW);
-    } else {
         bitWrite(greenLeds, 7, LOW);
         bitWrite(redLeds, 7, HIGH);
+    } else {
+        bitWrite(greenLeds, 7, HIGH);
+        bitWrite(redLeds, 7, LOW);
     }
 
     digitalWrite(latchPin, LOW);
