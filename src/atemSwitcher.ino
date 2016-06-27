@@ -41,9 +41,10 @@ enum cutMode {
 };
 
 // Pins
-const uint8_t modeButtonLED = 13;
-const uint8_t videoSourceLED[6] = {6,7,8,9,11,12};
 const uint8_t micPin[4] = {A0,A1,A2,A3};
+const uint8_t latchPin = 0;
+const uint8_t clockPin = 0;
+const uint8_t dataPin = 0;
 
 Button vidSource1(0, PULLUP, INVERT, DEBOUNCE_MS);
 Button vidSource2(1, PULLUP, INVERT, DEBOUNCE_MS);
@@ -83,14 +84,12 @@ IPAddress clientIP(10,64,160,134);
 IPAddress switcherIP(10,64,160,133);
 
 // States
-uint32_t debounceButton[8]; // 0 mode, 1-6 source, 7 cut
-uint8_t lastButtonState;
-uint8_t buttonTrigger;
-uint8_t buttonState = B11111111;
 uint32_t debounceMic[4];
 uint8_t lastMicState;
-uint8_t micTrigger;
 uint8_t micState = B00000000;
+
+uint8_t greenLeds = B00000000;
+uint8_t redLeds = B00000000;
 
 mode modeState = manual;
 cutMode cutState = cut;
@@ -106,6 +105,9 @@ void setup() {
     for(uint8_t i = 0; i < 4; i++) {
         pinMode(micPin[i], INPUT);
     }
+    pinMode(latchPin, OUTPUT);
+    pinMode(clockPin, OUTPUT);
+    pinMode(dataPin, OUTPUT);
 
     // Start up Ethernet and Serial (debugging)
     Ethernet.begin(mac,clientIP);
@@ -148,13 +150,13 @@ void readMic(uint8_t index) {
     reading = readingMax - readingMin;
 
     if (reading > MIC_THRESHOLD) {
-        debounceTrigger(LOW, index, &lastMicState, &micState, &micTrigger, debounceMic, MIC_DEBOUNCE_MS);
+        debounce(LOW, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
     } else {
-        debounceTrigger(HIGH, index, &lastMicState, &micState, &micTrigger, debounceMic, MIC_DEBOUNCE_MS);
+        debounce(HIGH, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
     }
 }
 
-void debounceTrigger(uint8_t reading, uint8_t index, uint8_t *lastState, uint8_t *state, uint8_t *trigger, uint32_t *debounceTime, uint32_t debounceDelay) {
+void debounce(uint8_t reading, uint8_t index, uint8_t *lastState, uint8_t *state, uint32_t *debounceTime, uint32_t debounceDelay) {
     if (reading != bitRead(*lastState, index)) {
         // State changed: reset de-bounce timer
         debounceTime[index] = millis();
@@ -165,10 +167,6 @@ void debounceTrigger(uint8_t reading, uint8_t index, uint8_t *lastState, uint8_t
         if (reading != bitRead(*state, index)) {
             // State changed: update state
             bitWrite(*state, index, reading);
-            if (reading == LOW) {
-                // Trigger once per input change
-                bitWrite(*trigger, index, HIGH);
-            }
         }
     }
     // Update last read
@@ -266,15 +264,38 @@ void updateATEM() {
 }
 
 void updateFromATEM() {
-    // Update mode LED
-    if (modeState == automatic) {
-        digitalWrite(modeButtonLED, HIGH);
-    } else {
-        digitalWrite(modeButtonLED, LOW);
+
+    // Update Green (Preview) LEDs
+    for(int i = 0; i < 6; i++) {
+        bitWrite(greenLeds, i, AtemSwitcher.getPreviewTally(i+1) ? HIGH : LOW);
     }
 
-    // Update Preview LEDs
-    for(int i =0; i < 6; i++) {
-        digitalWrite(videoSourceLED[i], AtemSwitcher.getPreviewTally(i+1) ? HIGH : LOW);
+    // Update Red (Program) LEDs
+    for(int i = 0; i < 6; i++) {
+        bitWrite(redLeds, i, AtemSwitcher.getProgramTally(i+1) ? HIGH : LOW);
     }
+
+    // Update cut LED
+    if (cutState == cut) {
+        bitWrite(greenLeds, 6, HIGH);
+        bitWrite(redLeds, 6, LOW);
+    } else {
+        bitWrite(greenLeds, 6, LOW);
+        bitWrite(redLeds, 6, HIGH);
+    }
+
+    // Update mode LED
+    if (modeState == automatic) {
+        bitWrite(greenLeds, 7, HIGH);
+        bitWrite(redLeds, 7, LOW);
+    } else {
+        bitWrite(greenLeds, 7, LOW);
+        bitWrite(redLeds, 7, HIGH);
+    }
+
+    digitalWrite(latchPin, LOW);
+    shiftOut(dataPin, clockPin, MSBFIRST, greenLeds);
+    shiftOut(dataPin, clockPin, MSBFIRST, redLeds);
+    digitalWrite(latchPin, HIGH);
+
 }
