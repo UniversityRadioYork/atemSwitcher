@@ -42,9 +42,12 @@ enum cutMode {
 
 // Pins
 const uint8_t micPin[4] = {A0,A1,A2,A3};
-const uint8_t latchPin = 0;
-const uint8_t clockPin = 0;
-const uint8_t dataPin = 0;
+const uint8_t latchPin = 9;
+const uint8_t clockPin = 10;
+const uint8_t dataPin = 8;
+const uint8_t resetPin = 11;
+const uint8_t greenOE = A4;
+const uint8_t redOE = A5;
 
 Button vidSource1(0, PULLUP, INVERT, DEBOUNCE_MS);
 Button vidSource2(1, PULLUP, INVERT, DEBOUNCE_MS);
@@ -88,8 +91,8 @@ uint32_t debounceMic[4];
 uint8_t lastMicState;
 uint8_t micState = B00000000;
 
-uint8_t greenLeds = B00000000;
-uint8_t redLeds = B00000000;
+uint8_t greenLeds = B11111111;
+uint8_t redLeds = B11111111;
 
 mode modeState = manual;
 cutMode cutState = cut;
@@ -108,6 +111,11 @@ void setup() {
     pinMode(latchPin, OUTPUT);
     pinMode(clockPin, OUTPUT);
     pinMode(dataPin, OUTPUT);
+    pinMode(resetPin, OUTPUT);
+
+    digitalWrite(resetPin, HIGH);
+    digitalWrite(greenOE, LOW);
+    digitalWrite(redOE, LOW);
 
     // Start up Ethernet and Serial (debugging)
     Ethernet.begin(mac,clientIP);
@@ -128,6 +136,15 @@ void loop() {
     for(uint8_t i = 0; i < 4; i++) {
         readMic(i);
     }
+    vidSource1.read();
+    vidSource2.read();
+    vidSource3.read();
+    vidSource4.read();
+    vidSource5.read();
+    vidSource6.read();
+    cutButton.read();
+    modeButton.read();
+
     updateState();
     updateATEM();
 }
