@@ -83,8 +83,8 @@ const uint16_t defaultVideoSource = 5;
 
 // Network Config
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0D, 0x6B, 0xB9};
-IPAddress clientIP(10,64,160,134);
-IPAddress switcherIP(10,64,160,133);
+IPAddress clientIP(192,168,12,39);
+IPAddress switcherIP(192,168,12,40);
 
 // States
 uint32_t debounceMic[4];
@@ -120,10 +120,13 @@ void setup() {
     // Start up Ethernet and Serial (debugging)
     Ethernet.begin(mac,clientIP);
     Serial.begin(115200);
+
+    delay(2000);
+
     Serial << F("\n- - - - - - - -\nSerial Started\n");
 
     AtemSwitcher.begin(switcherIP);
-    AtemSwitcher.serialOutput(1);
+    AtemSwitcher.serialOutput(0x80);
     AtemSwitcher.connect();
 
 }
@@ -283,14 +286,29 @@ void updateATEM() {
 void updateFromATEM() {
     // LOW is ON for LEDs as they are pull down
 
+    // Get state from ATEM
+    uint16_t prev = AtemSwitcher.getPreviewInput();
+    uint16_t prog = AtemSwitcher.getProgramInput();
+
+    // Serial << F("Prev: ") << prev << endl;
+    // Serial << F("Prog: ") << prog << endl;
+
     // Update Green (Preview) LEDs
-    for(int i = 0; i < 6; i++) {
-        bitWrite(greenLeds, i, AtemSwitcher.getPreviewTally(i+1) ? LOW : HIGH);
+    for(uint16_t i = 0; i < 6; i++) {
+        if (prev == (i+1)) {
+            bitClear(greenLeds, i);
+        } else {
+            bitSet(greenLeds, i);
+        }
     }
 
     // Update Red (Program) LEDs
-    for(int i = 0; i < 6; i++) {
-        bitWrite(redLeds, i, AtemSwitcher.getProgramTally(i+1) ? LOW : HIGH);
+    for(uint16_t i = 0; i < 6; i++) {
+        if (prog == (i+1)) {
+            bitClear(redLeds, i);
+        } else {
+            bitSet(redLeds, i);
+        }
     }
 
     // Update cut LED
@@ -310,6 +328,9 @@ void updateFromATEM() {
         bitWrite(greenLeds, 7, HIGH);
         bitWrite(redLeds, 7, LOW);
     }
+
+    // Serial << F("Green: ") << _BIN(greenLeds) << endl;
+    // Serial << F("Red  : ") << _BIN(redLeds) << endl;
 
     digitalWrite(latchPin, LOW);
     shiftOut(dataPin, clockPin, MSBFIRST, greenLeds);
