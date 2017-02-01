@@ -100,6 +100,7 @@ uint16_t videoSourceState;
 uint16_t lastVideoSourceState;
 bool doCut = false;
 bool longCut = false;
+bool flash = false;
 uint32_t lastAutoChange;
 
 void setup() {
@@ -313,20 +314,36 @@ void updateFromATEM() {
 
     // Update cut LED
     if (cutState == cut) {
-        bitWrite(greenLeds, 6, LOW);
-        bitWrite(redLeds, 6, HIGH);
+        bitClear(greenLeds, 6);
+        bitSet(redLeds, 6);
     } else {
-        bitWrite(greenLeds, 6, HIGH);
-        bitWrite(redLeds, 6, LOW);
+        bitSet(greenLeds, 6);
+        bitClear(redLeds, 6);
+    }
+
+    // Flash to show feedback
+    if (longCut) {
+        if (flash) {
+            if (cutState == cut) {
+                bitClear(greenLeds, 6);
+            } else {
+                bitClear(redLeds, 6);
+            }
+            flash = false;
+        } else {
+            bitSet(greenLeds, 6);
+            bitSet(redLeds, 6);
+            flash = true;
+        }
     }
 
     // Update mode LED
     if (modeState == automatic) {
-        bitWrite(greenLeds, 7, LOW);
-        bitWrite(redLeds, 7, HIGH);
+        bitClear(greenLeds, 7);
+        bitSet(redLeds, 7);
     } else {
-        bitWrite(greenLeds, 7, HIGH);
-        bitWrite(redLeds, 7, LOW);
+        bitSet(greenLeds, 7);
+        bitClear(redLeds, 7);
     }
 
     // Serial << F("Green: ") << _BIN(greenLeds) << endl;
