@@ -62,7 +62,7 @@ Button modeButton(7, PULLUP, INVERT, DEBOUNCE_MS);
 
 // Mapping
 const uint16_t micToVideoSource[16] = {
-    0, // 0000 No mics
+    5, // 0000 No mics
     1, // 0001 Presenter Mic
     5, // 0010 Guest 1
     5, // 0011 P & G1
@@ -77,7 +77,7 @@ const uint16_t micToVideoSource[16] = {
     5, // 1100 G2 & G3
     5, // 1101 P & G2 & G3
     5, // 1110 G1 & G2 & G3
-    5, // 1111 P & G2 & G3
+    5, // 1111 P & G1 & G2 & G3
 };
 const uint16_t defaultVideoSource = 5;
 
