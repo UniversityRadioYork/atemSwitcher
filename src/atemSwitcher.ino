@@ -83,8 +83,8 @@ const uint16_t defaultVideoSource = 5;
 
 // Network Config
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0D, 0x6B, 0xB9};
-IPAddress clientIP(192,168,12,39);
-IPAddress switcherIP(192,168,12,40);
+IPAddress clientIP(10,64,160,134);
+IPAddress switcherIP(10,64,160,133);
 
 // States
 uint32_t debounceMic[4];
