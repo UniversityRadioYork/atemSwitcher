@@ -278,6 +278,13 @@ void updateATEM() {
             } else {
                 AtemSwitcher.doCut();
             }
+            if(videoSourceState == ){
+                //Mute Studio Audio
+                //UnMute Pi Audio
+            } elseif(lastVideoSourceState == ) {
+                //UnMute Studio Audio
+                //Mute Pi Audio
+            }
             doCut = false;
         }
     }
@@ -353,5 +360,4 @@ void updateFromATEM() {
     shiftOut(dataPin, clockPin, MSBFIRST, greenLeds);
     shiftOut(dataPin, clockPin, MSBFIRST, redLeds);
     digitalWrite(latchPin, HIGH);
-
 }
