@@ -269,6 +269,7 @@ void updateATEM() {
             lastAutoChange = millis();
         }
     } else { // modeState == manual
+
         if (videoSourceState != lastVideoSourceState) {
             AtemSwitcher.changePreviewInput(videoSourceState);
         }
@@ -278,6 +279,7 @@ void updateATEM() {
             } else {
                 AtemSwitcher.doCut();
             }
+
             if(videoSourceState == 2){
                 AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
                 AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
@@ -285,6 +287,7 @@ void updateATEM() {
                 AtemSwitcher.changeAudioChannelMode(1101,1); //UnMute Studio Audio
                 AtemSwitcher.changeAudioChannelMode(2,0); //Mute Pi Audio
             }
+
             doCut = false;
         }
     }
