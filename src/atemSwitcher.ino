@@ -281,7 +281,7 @@ void updateATEM() {
             if(videoSourceState == 2){
                 AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
                 AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
-            } elseif(lastVideoSourceState == 2) {
+            } else if(lastVideoSourceState == 2) {
                 AtemSwitcher.changeAudioChannelMode(1101,1); //UnMute Studio Audio
                 AtemSwitcher.changeAudioChannelMode(2,0); //Mute Pi Audio
             }
