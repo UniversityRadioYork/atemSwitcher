@@ -151,13 +151,7 @@ void loop() {
 
     updateState();
     updateATEM();
-    if(AtemSwitcher.getProgramInput() == 2){
-        AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
-        AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
-    } else{
-        AtemSwitcher.changeAudioChannelMode(1101,1); //UnMute Studio Audio
-        AtemSwitcher.changeAudioChannelMode(2,0); //Mute Pi Audio
-    }
+    muteMainAudio();
 }
 
 void readMic(uint8_t index) {
@@ -181,6 +175,16 @@ void readMic(uint8_t index) {
         debounce(LOW, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
     } else {
         debounce(HIGH, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
+    }
+}
+
+void muteMainAudio(void){
+    if(AtemSwitcher.getProgramInput() == 2){ // If the current program input is equal to camera 2.
+        AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
+        AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
+    } else{
+        AtemSwitcher.changeAudioChannelMode(1101,1); //UnMute Studio Audio
+        AtemSwitcher.changeAudioChannelMode(2,0); //Mute Pi Audio
     }
 }
 
