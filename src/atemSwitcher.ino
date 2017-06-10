@@ -152,7 +152,7 @@ void loop() {
 
     updateState();
     updateATEM();
-    muteMainAudio();
+    updateAudioOutput();
 }
 
 void readMic(uint8_t index) {
@@ -179,7 +179,7 @@ void readMic(uint8_t index) {
     }
 }
 
-void muteMainAudio(void){
+void updateAudioOutput(void){
     if(AtemSwitcher.getProgramInput() == 2){ // If the current program input is equal to camera 2.
         AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
         AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
