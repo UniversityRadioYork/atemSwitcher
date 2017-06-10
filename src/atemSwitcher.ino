@@ -62,24 +62,25 @@ Button modeButton(7, PULLUP, INVERT, DEBOUNCE_MS);
 
 // Mapping
 const uint16_t micToVideoSource[16] = {
-    5, // 0000 No mics
+       // 321P Bits correspond to mics (G3 G2 G1 Pres)
+    3, // 0000 No mics
     1, // 0001 Presenter Mic
-    5, // 0010 Guest 1
-    5, // 0011 P & G1
-    5, // 0100 G2
-    5, // 0101 P & G2
-    5, // 0110 G1 & G2
-    5, // 0111 P & G1 & G2
-    5, // 1000 G3
-    5, // 1001 P & G3
-    5, // 1010 G1 & G3
-    5, // 1011 P & G1 & G3
-    5, // 1100 G2 & G3
-    5, // 1101 P & G2 & G3
-    5, // 1110 G1 & G2 & G3
-    5, // 1111 P & G1 & G2 & G3
+    3, // 0010 Guest 1
+    1, // 0011 P & G1
+    3, // 0100 G2
+    3, // 0101 P & G2
+    3, // 0110 G1 & G2
+    3, // 0111 P & G1 & G2
+    3, // 1000 G3
+    3, // 1001 P & G3
+    3, // 1010 G1 & G3
+    3, // 1011 P & G1 & G3
+    3, // 1100 G2 & G3
+    3, // 1101 P & G2 & G3
+    3, // 1110 G1 & G2 & G3
+    3, // 1111 P & G1 & G2 & G3
 };
-const uint16_t defaultVideoSource = 5;
+const uint16_t defaultVideoSource = 3;
 
 // Network Config
 byte mac[] = {0x90, 0xA2, 0xDA, 0x0D, 0x6B, 0xB9};
@@ -151,6 +152,7 @@ void loop() {
 
     updateState();
     updateATEM();
+    updateAudioOutput();
 }
 
 void readMic(uint8_t index) {
@@ -174,6 +176,16 @@ void readMic(uint8_t index) {
         debounce(LOW, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
     } else {
         debounce(HIGH, index, &lastMicState, &micState, debounceMic, MIC_DEBOUNCE_MS);
+    }
+}
+
+void updateAudioOutput(void){
+    if(AtemSwitcher.getProgramInput() == 2){ // If the current program input is equal to camera 2.
+        AtemSwitcher.changeAudioChannelMode(1101,0); //Mute Studio Audio
+        AtemSwitcher.changeAudioChannelMode(2,1); //UnMute Pi Audio
+    } else{
+        AtemSwitcher.changeAudioChannelMode(1101,1); //UnMute Studio Audio
+        AtemSwitcher.changeAudioChannelMode(2,0); //Mute Pi Audio
     }
 }
 
@@ -269,6 +281,7 @@ void updateATEM() {
             lastAutoChange = millis();
         }
     } else { // modeState == manual
+
         if (videoSourceState != lastVideoSourceState) {
             AtemSwitcher.changePreviewInput(videoSourceState);
         }
@@ -278,6 +291,7 @@ void updateATEM() {
             } else {
                 AtemSwitcher.doCut();
             }
+
             doCut = false;
         }
     }
@@ -353,5 +367,4 @@ void updateFromATEM() {
     shiftOut(dataPin, clockPin, MSBFIRST, greenLeds);
     shiftOut(dataPin, clockPin, MSBFIRST, redLeds);
     digitalWrite(latchPin, HIGH);
-
 }
